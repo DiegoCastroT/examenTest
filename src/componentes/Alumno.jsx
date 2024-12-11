@@ -4,13 +4,13 @@ const Alumno = () => {
     const [alumnos, setAlumnos] = useState([]);
     const [notas, setNotas] = useState([]);
     const [promedio, setPromedio] = useState(null);
-    const [filtro, setFiltro] = useState(-1);
+    const [filtro, setFiltro] = useState(0);
     const [textoFiltro, setTextoFiltro] = useState("");
 
     useEffect(() => {
         fetch('/alumnos.json')
             .then(res => res.json())
-            .then(data => setAlumnos(data.alumnos));
+            .then(data => setAlumnos(data.alumnos))
     }, []);
 
     const getNotas = (alumno) => {
@@ -46,22 +46,27 @@ const Alumno = () => {
         setTextoFiltro(event.target.value);
     };
 
-    const alumnosFiltrados
-        = alumnos.filter(alumno => alumno.nombre.includes(textoFiltro)).sort((a, b) => {
+    const alumnosFiltrados = alumnos
+        .filter(alumno => alumno.nombre.toLowerCase().includes(textoFiltro.toLowerCase()))
+        .sort((a, b) => {
             if (filtro === 0) {
                 return a.nombre.localeCompare(b.nombre);
             } else if (filtro === 1) {
-                const promedioA = Object.values(a.asignaturas)
-                    .reduce((acc, asignatura) => acc + (
-                        (asignatura.primera_evaluacion + signatura.segunda_evaluacion
-                            + asignatura.tercera_evaluacion) / 3)
-                    ) / 3;
-                const promedioB = Object.values(b.asignaturas)
-                    .reduce((acc, asignatura) => acc + (
-                        (asignatura.primera_evaluacion + asignatura.segunda_evaluacion +
-                            asignatura.tercera_evaluacion) / 3)
-                    ) / 3;
-                return promedioA - promedioB;
+                const calcularPromedio = (asignaturas) => {
+                    const total = Object.values(asignaturas).reduce((acc, asignatura) => {
+                        const sumaEvaluaciones =
+                            asignatura.primera_evaluacion +
+                            asignatura.segunda_evaluacion +
+                            asignatura.tercera_evaluacion;
+                        return acc + sumaEvaluaciones / 3;
+                    }, 0);
+                    return total / Object.keys(asignaturas).length;
+                };
+
+                const promedioA = calcularPromedio(a.asignaturas);
+                const promedioB = calcularPromedio(b.asignaturas);
+
+                return promedioB - promedioA;
             }
             return 0;
         });
@@ -115,7 +120,6 @@ const Alumno = () => {
                     ))}
                 </ul>
             </div>
-
         </div>
     );
 };
